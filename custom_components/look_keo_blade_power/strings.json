@@ -1,0 +1,13 @@
+{
+    "config": {
+        "step": {
+            "user": {
+                "title": "LOOK Keo Blade Power",
+                "description": "Configure a new pedal.",
+                "data": {
+                    "address": "MAC Address"
+                }
+            }
+        }
+    }
+}

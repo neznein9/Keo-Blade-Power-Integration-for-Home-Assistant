@@ -1,0 +1,12 @@
+{
+    "domain": "look_keo_blade_power",
+    "name": "LOOK Keo Blade Power",
+    "version": "0.0.1",
+    "documentation": "https://github.com/neznein9/Keo-Blade-Power-Integration-for-Home-Assistant",
+    "issue_tracker": "https://github.com/neznein9/Keo-Blade-Power-Integration-for-Home-Assistant/issues",
+    "dependencies": [ "bluetooth" ],
+    "iot_class": "local_push",
+    "integration_type": "integration",
+    "config_flow": true,
+    "codeowners": [ "@neznein9" ]
+}

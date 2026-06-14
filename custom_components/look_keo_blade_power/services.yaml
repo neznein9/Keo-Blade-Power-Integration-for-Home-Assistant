@@ -1,0 +1,11 @@
+# dump_last_bt_advertisement:
+#   name: Dump Last Bluetooth Advertisement
+#   description: Logs the most recently received Bluetooth advertisement.
+
+# dump_device_info:
+#   name: Dump Device Info
+#   description: Logs information about the last discovered BLE device.
+
+delete_all_entries:
+  name: Delete All LOOK Pedal Entries
+  description: Deletes every config entry for LOOK Keo Blade Power integration.
