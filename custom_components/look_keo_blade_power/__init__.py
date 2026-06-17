@@ -9,10 +9,16 @@ from homeassistant.components import bluetooth
 from homeassistant.components.bluetooth import BluetoothScanningMode
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.const import Platform
+from homeassistant.helpers.dispatcher import async_dispatcher_send
 
-PLATFORMS = ["sensor"]
 LOGGER = logging.getLogger(__name__)
 
+PLATFORMS = [
+    Platform.SENSOR,
+    Platform.BINARY_SENSOR,
+    Platform.BUTTON
+]
 
 async def async_setup(
     hass: HomeAssistant,
@@ -55,6 +61,7 @@ async def async_setup_entry(
 
         pedal.update_from_advertisement(service_info)
         LOGGER.warning("PEDAL %s advertisements=%s", pedal.name, pedal.advertisement_count)
+        async_dispatcher_send(hass, f"{DOMAIN}_{entry.entry_id}_updated")
 
     if DEBUG_BLUETOOTH:
         _dump_entry(entry)

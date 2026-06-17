@@ -9,3 +9,40 @@
 delete_all_entries:
   name: Delete All LOOK Pedal Entries
   description: Deletes every config entry for LOOK Keo Blade Power integration.
+
+dump_devices:
+  name: Dump LOOK pedal devices
+  description: Print all devices to Logs
+
+probe_bluetooth_connection_info:
+  name: Probe Bluetooth Connection Info
+  description: Logs Home Assistant Bluetooth connection data for a BLE address.
+  fields:
+    address:
+      name: Address
+      description: BLE MAC address to inspect.
+      required: true
+      selector:
+        text:
+
+probe_gatt_services:
+  name: Probe Bluetooth Attribute Profile
+  description: Logs Home Assistant Bluetooth attribute data for a BLE address.
+  fields:
+    address:
+      name: Address
+      description: BLE MAC address to inspect.
+      required: true
+      selector:
+        text:
+
+read_battery:
+  name: Read battery info from BLE connection
+  description: Connects to a Bluetooth device and reads battery percent.
+  fields:
+    address:
+      name: Address
+      description: BLE MAC address to inspect.
+      required: true
+      selector:
+        text:
