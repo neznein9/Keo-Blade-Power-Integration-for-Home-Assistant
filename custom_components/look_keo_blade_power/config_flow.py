@@ -1,6 +1,7 @@
 import voluptuous as vol
 
 from homeassistant import config_entries
+
 from .const import DOMAIN
 
 
@@ -12,12 +13,9 @@ class LookKeoBladePowerConfigFlow(
 
     async def async_step_user(self, user_input=None):
         if user_input is not None:
-
             for entry in self._async_current_entries():
                 if entry.data.get("address") == user_input["address"]:
-                    return self.async_abort(
-                        reason="already_configured"
-                    )
+                    return self.async_abort(reason="already_configured")
 
             return self.async_create_entry(
                 title=user_input["address"],

@@ -1,18 +1,17 @@
 import logging
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceInfo
-from homeassistant.helpers.entity import EntityCategory
-from homeassistant.core import callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
+from homeassistant.helpers.entity import EntityCategory
 from homeassistant.components.sensor import (
     SensorEntity,
     SensorDeviceClass,
     SensorStateClass,
 )
 
-from .const import (DOMAIN, DEBUG_TAG)
+from .const import DOMAIN, DEBUG_TAG
 from .pedal import LookPedal
 
 
@@ -36,7 +35,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
             LookPedalRSSISensor(pedal),
             LookPedalLastSeenSensor(pedal),
 
-            LookPedalEntryIdSensor(pedal), # DEBUG
+            LookPedalEntryIdSensor(pedal),  # DEBUG
             LookPedalAddressSensor(pedal),
             LookPedalLocalNameSensor(pedal),
             LookPedalConnectableSensor(pedal),
@@ -59,7 +58,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     )
 
 
-# Base Class
 class LookPedalSensor(SensorEntity):
     sensor_key = None
     sensor_name = None
@@ -70,7 +68,7 @@ class LookPedalSensor(SensorEntity):
     def __init__(self, pedal: LookPedal):
         self.pedal = pedal
         self._attr_name = self.sensor_name
-        self._attr_unique_id = (f"{pedal.address}_{self.sensor_key}_{DEBUG_TAG}")
+        self._attr_unique_id = f"{pedal.address}_{self.sensor_key}_{DEBUG_TAG}"
 
     async def async_added_to_hass(self) -> None:
         self.async_on_remove(
@@ -82,9 +80,7 @@ class LookPedalSensor(SensorEntity):
         )
 
     @property
-    def device_info(
-        self,
-    ) -> DeviceInfo:
+    def device_info(self) -> DeviceInfo:
         return DeviceInfo(
             identifiers={(DOMAIN, self.pedal.address)},
             manufacturer="LOOK",
@@ -98,7 +94,7 @@ class LookPedalSensor(SensorEntity):
 
 
 class LookPedalAdvertisementCountSensor(LookPedalSensor):
-    sensor_key = f"advertisement_count"
+    sensor_key = "advertisement_count"
     sensor_name = "Advertisement Count"
     _attr_icon = "mdi:radio-tower"
 
@@ -108,7 +104,7 @@ class LookPedalAdvertisementCountSensor(LookPedalSensor):
 
 
 class LookPedalRSSISensor(LookPedalSensor):
-    sensor_key = f"rssi"
+    sensor_key = "rssi"
     sensor_name = "RSSI"
     _attr_native_unit_of_measurement = "dBm"
     _attr_state_class = SensorStateClass.MEASUREMENT
@@ -132,24 +128,24 @@ class LookPedalRSSISensor(LookPedalSensor):
 
 
 class LookPedalLastSeenSensor(LookPedalSensor):
-    sensor_key = f"last_seen"
+    sensor_key = "last_seen"
     sensor_name = "Last Seen"
     _attr_device_class = SensorDeviceClass.TIMESTAMP
     _attr_icon = "mdi:clock-outline"
+
     @property
     def native_value(self):
         return self.pedal.last_seen
 
 
-class LookPedalRawAdvertisementSensor(
-    LookPedalSensor,
-):
-    sensor_key = f"ble_packet"
+class LookPedalRawAdvertisementSensor(LookPedalSensor):
+    sensor_key = "ble_packet"
     sensor_name = "BLE Packet"
     _attr_entity_category = EntityCategory.DIAGNOSTIC
     _attr_entity_registry_enabled_default = True
     _attr_icon = "mdi:code-json"
     _attr_entity_registry_visible_default = False
+
     @property
     def native_value(self):
         if self.pedal.raw is None:
@@ -159,12 +155,7 @@ class LookPedalRawAdvertisementSensor(
     @property
     def extra_state_attributes(self):
         return {
-            "raw_hex": (
-                self.pedal.raw.hex()
-                if self.pedal.raw
-                else None
-            ),
-
+            "raw_hex": self.pedal.raw.hex() if self.pedal.raw else None,
             "name": self.pedal.local_name,
             "address": self.pedal.address,
             "rssi": self.pedal.rssi,
@@ -173,7 +164,7 @@ class LookPedalRawAdvertisementSensor(
             "connectable": self.pedal.connectable,
             "time": self.pedal.time,
             "tx_power": self.pedal.tx_power,
-            "parsed_hex": self.parse_advertisement(self.pedal.raw)
+            "parsed_hex": self.parse_advertisement(self.pedal.raw),
         }
 
     @staticmethod
@@ -193,88 +184,85 @@ class LookPedalRawAdvertisementSensor(
             ad_type = raw[index + 1]
             data_start = index + 2
             data_end = index + 1 + length
-
             data = raw[data_start:data_end]
 
             results.append({
                 "type": ad_type,
-                "name": AD_TYPES.get(
-                    ad_type,
-                    f"Unknown (0x{ad_type:02X})",
-                ),
+                "name": AD_TYPES.get(ad_type, f"Unknown (0x{ad_type:02X})"),
                 "data_hex": data.hex(),
             })
-
-
 
             index += length + 1
         return results
 
 
 class LookPedalAddressSensor(LookPedalSensor):
-    sensor_key = f"mac_address"
+    sensor_key = "mac_address"
     sensor_name = "MAC"
     _attr_entity_category = EntityCategory.DIAGNOSTIC
     _attr_entity_registry_enabled_default = True
-    # _attr_entity_registry_visible_default = False
     _attr_icon = "mdi:bluetooth"
+
     @property
     def native_value(self):
         return self.pedal.address
 
 
-
 class LookPedalEntryIdSensor(LookPedalSensor):
-    sensor_key = f"entry_id"
+    sensor_key = "entry_id"
     sensor_name = "HA Entry ID"
     _attr_entity_category = EntityCategory.DIAGNOSTIC
     _attr_entity_registry_enabled_default = True
     _attr_entity_registry_visible_default = False
     _attr_icon = "mdi:information"
+
     @property
     def native_value(self):
         return self.pedal.entry_id[:10] + "..."
 
 
 class LookPedalLocalNameSensor(LookPedalSensor):
-    sensor_key = f"local_name"
+    sensor_key = "local_name"
     sensor_name = "Local Name"
     _attr_entity_category = EntityCategory.DIAGNOSTIC
     _attr_entity_registry_enabled_default = True
-    # _attr_entity_registry_visible_default = False
+    _attr_entity_registry_visible_default = False
     _attr_icon = "mdi:tag-text-outline"
+
     @property
     def native_value(self):
         return self.pedal.local_name
 
 
 class LookPedalTxPowerSensor(LookPedalSensor):
-    sensor_key = f"tx_power"
+    sensor_key = "tx_power"
     sensor_name = "Tx Power"
     _attr_entity_category = EntityCategory.DIAGNOSTIC
     _attr_entity_registry_enabled_default = True
+    _attr_entity_registry_visible_default = False
     _attr_icon = "mdi:antenna"
+
     @property
     def native_value(self):
         return self.pedal.tx_power
 
 
 class LookPedalConnectableSensor(LookPedalSensor):
-    sensor_key = f"connectable"
+    sensor_key = "connectable"
     sensor_name = "Connectable"
     _attr_entity_category = EntityCategory.DIAGNOSTIC
     _attr_entity_registry_visible_default = False
     _attr_icon = "mdi:bluetooth-connect"
+
     @property
     def native_value(self):
         return self.pedal.connectable
 
 
 class LookPedalBatteryPercentSensor(LookPedalSensor):
-    sensor_key = f"battery_percent"
+    sensor_key = "battery_percent"
     sensor_name = "Battery"
-
-    _attr_unit_of_measurement = "%"
+    _attr_native_unit_of_measurement = "%"
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_device_class = SensorDeviceClass.BATTERY
     _attr_entity_registry_visible_default = True
@@ -311,9 +299,8 @@ class LookPedalBatteryPercentSensor(LookPedalSensor):
         return self.pedal.battery_percent
 
 
-
 class LookPedalLastBatteryReadSensor(LookPedalSensor):
-    sensor_key = f"battery_last_read"
+    sensor_key = "battery_last_read"
     sensor_name = "Last Battery Read"
 
     _attr_device_class = SensorDeviceClass.TIMESTAMP
@@ -326,10 +313,11 @@ class LookPedalLastBatteryReadSensor(LookPedalSensor):
 
 
 class LookPedalLastBTRequestSensor(LookPedalSensor):
-    sensor_key = f"bt_last_request"
+    sensor_key = "bt_last_request"
     sensor_name = "Last BT Request"
 
     _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_entity_registry_visible_default = False
     _attr_icon = "mdi:code-json"
 
     @property
@@ -352,70 +340,84 @@ class LookPedalLastBTRequestSensor(LookPedalSensor):
 
 
 class LookPedalManufacturerSensor(LookPedalSensor):
-    sensor_key = f"manufacturer"
+    sensor_key = "manufacturer"
     sensor_name = "Manufacturer"
-    _attr_icon = "mdi:factory"
+    _attr_icon = "mdi:bicycle"
     _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_entity_registry_visible_default = False
+
     @property
     def native_value(self):
         return self.pedal.manufacturer_name
 
 
 class LookPedalModelNoSensor(LookPedalSensor):
-    sensor_key = f"model_no"
-    sensor_name = "Model"
+    sensor_key = "model_no"
+    sensor_name = "Model No"
     _attr_icon = "mdi:sail-boat"
     _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_entity_registry_visible_default = False
+
     @property
     def native_value(self):
         return self.pedal.model_number
 
 
 class LookPedalSerialNoSensor(LookPedalSensor):
-    sensor_key = f"serial_no"
-    sensor_name = "Serial"
+    sensor_key = "serial_no"
+    sensor_name = "Serial No"
     _attr_icon = "mdi:barcode"
     _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_entity_registry_visible_default = False
+
     @property
     def native_value(self):
         return self.pedal.serial_number
 
 
 class LookPedalHardwareRevSensor(LookPedalSensor):
-    sensor_key = f"hardware_rev"
+    sensor_key = "hardware_rev"
     sensor_name = "Hardware Revision"
     _attr_icon = "mdi:progress-wrench"
     _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_entity_registry_visible_default = False
+
     @property
     def native_value(self):
         return self.pedal.hardware_revision
 
 
 class LookPedalFirmwareRevSensor(LookPedalSensor):
-    sensor_key = f"firmware_rev"
+    sensor_key = "firmware_rev"
     sensor_name = "Firmware Revision"
     _attr_icon = "mdi:progress-star-four-points"
     _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_entity_registry_visible_default = False
+
     @property
     def native_value(self):
         return self.pedal.firmware_revision
 
 
 class LookPedalSoftwareRevSensor(LookPedalSensor):
-    sensor_key = f"software_rev"
+    sensor_key = "software_rev"
     sensor_name = "Software Revision"
     _attr_icon = "mdi:progress-pencil"
     _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_entity_registry_visible_default = False
+
     @property
     def native_value(self):
         return self.pedal.software_revision
 
 
 class LookPedalSystemIdSensor(LookPedalSensor):
-    sensor_key = f"system_id"
+    sensor_key = "system_id"
     sensor_name = "System ID"
     _attr_icon = "mdi:identifier"
     _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_entity_registry_visible_default = False
+
     @property
     def native_value(self):
         return self.pedal.system_id
@@ -423,24 +425,33 @@ class LookPedalSystemIdSensor(LookPedalSensor):
     @property
     def extra_state_attributes(self):
         return {
-            "company identifier": None, #40 Least Significant bits (right side bits)
-            "organization id (OUI)": None, #24 Most Significant bits (left side bits)
+            "company identifier": None,  # 40 least significant bits
+            "organization id (OUI)": None,  # 24 most significant bits
         }
 
 
 class LookPedalPnPSensor(LookPedalSensor):
-    sensor_key = f"pnp_id"
-    sensor_name = "Plug-and-Play Id"
-    _attr_icon = "mdi:connection"
+    sensor_key = "pnp_id"
+    sensor_name = "Plug-and-Play ID"
+    _attr_icon = "mdi:cable-data"
     _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_entity_registry_visible_default = False
+
     @property
     def native_value(self):
-        return self.pedal.pnp_id
+        pnp = self.pedal.pnp_id
+        if pnp is None:
+            return None
+        return pnp.get("raw")
 
     @property
     def extra_state_attributes(self):
+        pnp = self.pedal.pnp_id
+        if pnp is None:
+            return {}
         return {
-            "vendor id": None,
-            "product id": None,
-            "product version": None,
+            "vendor_id_source": pnp.get("vendor_id_source"),
+            "vendor_id": pnp.get("vendor_id"),
+            "product_id": pnp.get("product_id"),
+            "product_version": pnp.get("product_version"),
         }
