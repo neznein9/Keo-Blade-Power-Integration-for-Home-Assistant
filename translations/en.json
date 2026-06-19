@@ -4,7 +4,7 @@
         "step": {
             "user": {
                 "title": "LOOK Keo Blade Power",
-                "description": "Configure a new pedal.",
+                "description": "NOTE: Pedals are only reachable for 120 seconds after waking. Device information and battery reads may fail when the pedal is asleep.",
                 "data": {
                     "address": "MAC Address"
                 }

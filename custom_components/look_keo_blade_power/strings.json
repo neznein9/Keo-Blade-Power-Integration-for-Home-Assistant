@@ -3,11 +3,17 @@
         "step": {
             "user": {
                 "title": "LOOK Keo Blade Power",
-                "description": "Configure a new pedal.",
+                "description": "Enter the Bluetooth MAC address of the pedal.",
                 "data": {
                     "address": "MAC Address"
                 }
             }
+        },
+        "error": {
+            "invalid_address": "Invalid Bluetooth MAC address"
+        },
+        "abort": {
+            "already_configured": "This pedal is already configured."
         }
     }
 }

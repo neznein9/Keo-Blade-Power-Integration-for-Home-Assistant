@@ -13,7 +13,7 @@ from bleak_retry_connector import BleakNotFoundError
 from bleak_retry_connector import BleakOutOfConnectionSlotsError
 
 from . import bt_helper
-from .const import DOMAIN, DEBUG_TAG
+from .const import DOMAIN
 
 
 LOGGER = logging.getLogger(__name__)
@@ -22,7 +22,7 @@ LOGGER = logging.getLogger(__name__)
 class LookPedal:
     def __init__(self, address: str, name: str):
         # from HA
-        self.address = address
+        self.address = address.upper()
         self.entry_id = None
         self.name = name
 
@@ -74,7 +74,7 @@ class LookPedal:
     @classmethod
     def from_config_entry(cls, entry: ConfigEntry) -> "LookPedal":
         pedal = cls(
-            address=entry.data["address"],
+            address=entry.data["address"].upper(),
             name=entry.title,
         )
         pedal.entry_id = entry.entry_id
@@ -132,10 +132,10 @@ class LookPedal:
         self.bt_last_request_disconnected = None
         self.bt_last_request_delta_seconds = None
 
-    def _ble_precondition(self, hass: HomeAssistant):
+    def _ble_precondition(self, hass: HomeAssistant) -> tuple[bool, BLEDevice | None]:
         """Check BLE availability. Returns (True, ble_device) or (False, None) after setting result state."""
         if not bluetooth.async_address_present(hass, self.address, connectable=True):
-            LOGGER.warning("Device is not currently awake: %s", self.address)
+            LOGGER.info("Device is not currently awake: %s", self.address)
             self.bt_last_request_result = "Sleeping"
             self.bt_last_request_log = "Pedal is offline or sleeping"
             return False, None
@@ -154,7 +154,7 @@ class LookPedal:
 
         ble_device = bluetooth.async_ble_device_from_address(hass, self.address, connectable=True)
         if ble_device is None:
-            LOGGER.warning("Device not available: %s", self.address)
+            LOGGER.info("Device not available: %s", self.address)
             self.bt_last_request_result = "Unavailable"
             self.bt_last_request_log = "Pedal is not available"
             return False, None
@@ -178,10 +178,10 @@ class LookPedal:
         start = time.monotonic()
         try:
             client = await establish_connection(BleakClient, ble_device, ble_device.address)
-            LOGGER.info("Connected to %s", self.address)
+            LOGGER.info("Connected to %s", ble_device.address)
             self.bt_last_request_connected = now()
 
-            LOGGER.warning("read_battery CONNECTED=%s BEFORE READ %s", client.is_connected, bt_helper.describe_uuid(uuid))
+            LOGGER.info("read_battery CONNECTED=%s BEFORE READ %s", client.is_connected, bt_helper.describe_uuid(uuid))
             battery_bytes = await asyncio.wait_for(client.read_gatt_char(uuid), timeout=5)
 
             if not battery_bytes:
@@ -198,7 +198,7 @@ class LookPedal:
 
             self.battery_percent = battery_percent
             self.last_battery_read = now()
-            LOGGER.warning("BATTERY RAW=%s PERCENT=%s", battery_bytes, battery_percent)
+            LOGGER.debug("BATTERY RAW=%s PERCENT=%s", battery_bytes, battery_percent)
             self.bt_last_request_result = "Success"
             self.bt_last_request_log = f"Battery read success: RAW={battery_bytes}, PCT={battery_percent}"
             self.last_battery_poll_request = time.monotonic()
@@ -214,7 +214,7 @@ class LookPedal:
             self.bt_last_request_log = "BleakOutOfConnectionSlotsError: Pedal refused connection"
             return None
         except Exception:
-            LOGGER.exception("Unexpected battery read failure")
+            LOGGER.error("Unexpected battery read failure")
             self.bt_last_request_result = "Error"
             self.bt_last_request_log = "Exception: Unexpected failure"
             return None
@@ -224,7 +224,7 @@ class LookPedal:
             elapsed = time.monotonic() - start
             self.bt_last_request_disconnected = now()
             self.bt_last_request_delta_seconds = elapsed
-            LOGGER.warning("Battery read completed in %.2f sec", elapsed)
+            LOGGER.debug("Battery read completed in %.2f sec", elapsed)
             self.battery_poll_in_flight = False
             await self.save(hass)
 
@@ -280,7 +280,7 @@ class LookPedal:
             self.bt_last_request_result = "Connection denied"
             self.bt_last_request_log = "BleakOutOfConnectionSlotsError: Pedal refused connection"
         except Exception:
-            LOGGER.exception("Unexpected read failure")
+            LOGGER.error("Unexpected read failure")
             self.bt_last_request_result = "Error"
             self.bt_last_request_log = "Exception: Unexpected failure"
         finally:
@@ -289,7 +289,7 @@ class LookPedal:
             elapsed = time.monotonic() - start
             self.bt_last_request_disconnected = now()
             self.bt_last_request_delta_seconds = elapsed
-            LOGGER.warning("Device read completed in %.2f sec", elapsed)
+            LOGGER.debug("Device read completed in %.2f sec", elapsed)
             self.device_poll_in_flight = False
             await self.save(hass)
             if not self.last_battery_poll_request or time.monotonic() - self.last_battery_poll_request > 3600:
@@ -303,7 +303,7 @@ class LookPedal:
         self.bt_last_request_gatt_short = uuid_desc
         self.bt_last_request_gatt_long = uuid
 
-        LOGGER.warning("read_utf8_characteristic CONNECTED=%s BEFORE READ %s", client.is_connected, uuid_desc)
+        LOGGER.debug("read_utf8_characteristic CONNECTED=%s BEFORE READ %s", client.is_connected, uuid_desc)
         raw = await asyncio.wait_for(client.read_gatt_char(uuid), timeout=5)
 
         if not raw:
@@ -329,7 +329,7 @@ class LookPedal:
         self.bt_last_request_gatt_short = uuid_desc
         self.bt_last_request_gatt_long = uuid
 
-        LOGGER.warning("read_system_id CONNECTED=%s BEFORE READ %s", client.is_connected, uuid_desc)
+        LOGGER.debug("read_system_id CONNECTED=%s BEFORE READ %s", client.is_connected, uuid_desc)
         raw = await asyncio.wait_for(client.read_gatt_char(uuid), timeout=5)
 
         if not raw:
@@ -338,7 +338,7 @@ class LookPedal:
             self.bt_last_request_log = f"{uuid_desc} returned empty payload"
             return None
 
-        LOGGER.warning("SYSTEM ID RAW=%s LEN=%s", raw.hex().upper(), len(raw))
+        LOGGER.debug("SYSTEM ID RAW=%s LEN=%s", raw.hex().upper(), len(raw))
         self.bt_last_request_bytes = raw.hex()
         self.bt_last_request_result = "..."
         self.bt_last_request_log = f"{uuid_desc} read success"
@@ -355,7 +355,7 @@ class LookPedal:
         self.bt_last_request_gatt_short = uuid_desc
         self.bt_last_request_gatt_long = uuid
 
-        LOGGER.warning("read_pnp_if_empty CONNECTED=%s BEFORE READ %s", client.is_connected, uuid_desc)
+        LOGGER.debug("read_pnp_if_empty CONNECTED=%s BEFORE READ %s", client.is_connected, uuid_desc)
         raw = await asyncio.wait_for(client.read_gatt_char(uuid), timeout=5)
 
         if not raw:
@@ -364,7 +364,7 @@ class LookPedal:
             self.bt_last_request_log = f"{uuid_desc} returned empty payload"
             return None
 
-        LOGGER.warning("PNP ID RAW=%s LEN=%s", raw.hex(), len(raw))
+        LOGGER.debug("PNP ID RAW=%s LEN=%s", raw.hex(), len(raw))
         self.bt_last_request_bytes = raw.hex()
         self.pnp_id = {
             "raw": raw.hex(),
@@ -373,25 +373,25 @@ class LookPedal:
             "product_id": int.from_bytes(raw[3:5], "little"),
             "product_version": int.from_bytes(raw[5:7], "little"),
         }
-        LOGGER.warning("PNP: %s", self.pnp_id)
+        LOGGER.debug("PNP: %s", self.pnp_id)
         self.bt_last_request_result = "..."
         self.bt_last_request_log = f"{uuid_desc} read success"
         return self.pnp_id
 
     def _store(self, hass: HomeAssistant) -> Store:
-        return Store(hass, 1, f"{DOMAIN}_{self.address}_{DEBUG_TAG}")
+        return Store(hass, 1, f"look_keo_blade_power/{DOMAIN}_{self.address}")
 
     async def _save_background(self, hass: HomeAssistant) -> None:
         try:
             await self.save(hass)
         except Exception:
-            LOGGER.exception("Failed to save pedal state")
+            LOGGER.error("Failed to save pedal state")
 
     async def save(self, hass: HomeAssistant) -> None:
         if self.save_in_progress:
             return
         self.save_in_progress = True
-        LOGGER.warning("Saving device: %s", self.address)
+        LOGGER.debug("Saving device: %s", self.address)
         try:
             store = self._store(hass)
             await store.async_save({
@@ -410,7 +410,7 @@ class LookPedal:
                 "pnp_id": self.pnp_id,
             })
             self.last_save = time.monotonic()
-            LOGGER.warning("Save successful: %s", self.address)
+            LOGGER.debug("Save successful: %s", self.address)
         finally:
             self.save_in_progress = False
 
@@ -445,4 +445,4 @@ class LookPedal:
             self.system_id = data["system_id"]
         if "pnp_id" in data and data["pnp_id"]:
             self.pnp_id = data["pnp_id"]
-        LOGGER.warning("Loaded device: %s", self.address)
+        LOGGER.debug("Loaded device: %s", self.address)

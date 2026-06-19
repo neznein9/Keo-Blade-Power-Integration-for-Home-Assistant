@@ -7,7 +7,7 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.entity import EntityCategory
 
-from .const import DOMAIN, DEBUG_TAG
+from .const import DOMAIN
 from .pedal import LookPedal
 
 
@@ -23,18 +23,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
         LookPedalReadDeviceDataButton(hass, pedal),
     ])
 
-    LOGGER.warning("BUTTON PLATFORM LOADED FOR %s", pedal.address)
-
 
 class LookPedalButton(ButtonEntity):
     button_key = None
     button_name = None
 
-    def __init__(self, hass: HomeAssistant, pedal: LookPedal):
+    def __init__(self, hass: HomeAssistant, pedal: LookPedal) -> None:
         self.hass = hass
         self.pedal = pedal
         self._attr_name = self.button_name
-        self._attr_unique_id = f"{pedal.address}_{self.button_key}_{DEBUG_TAG}"
+        self._attr_unique_id = f"{pedal.address}_{self.button_key}"
 
     @property
     def device_info(self) -> DeviceInfo:
@@ -48,11 +46,11 @@ class LookPedalButton(ButtonEntity):
 
 class LookPedalReadBatteryButton(LookPedalButton):
     button_key = "check_battery"
-    button_name = "Check Battery"
+    button_name = "Read Battery"
     _attr_icon = "mdi:battery-sync"
     _attr_entity_category = EntityCategory.DIAGNOSTIC
 
-    async def async_press(self):
+    async def async_press(self) -> None:
         self.pedal.last_battery_poll_request = None  # Button ignores debounce
         await self.pedal.read_battery(self.hass)
         async_dispatcher_send(self.hass, f"{DOMAIN}_{self.pedal.entry_id}_updated")
@@ -63,9 +61,8 @@ class LookPedalClearDeviceDataButton(LookPedalButton):
     button_name = "Clear Device Data"
     _attr_icon = "mdi:close-outline"
     _attr_entity_category = EntityCategory.DIAGNOSTIC
-    _attr_entity_registry_visible_default = False
 
-    async def async_press(self):
+    async def async_press(self) -> None:
         self.pedal.clear_device_data(self.hass)
         async_dispatcher_send(self.hass, f"{DOMAIN}_{self.pedal.entry_id}_updated")
 
@@ -75,9 +72,8 @@ class LookPedalReadDeviceDataButton(LookPedalButton):
     button_name = "Read Device Data"
     _attr_icon = "mdi:leak"
     _attr_entity_category = EntityCategory.DIAGNOSTIC
-    _attr_entity_registry_visible_default = False
 
-    async def async_press(self):
+    async def async_press(self) -> None:
         self.pedal.last_device_poll_request = None  # Button ignores debounce
         await self.pedal.read_device_data(self.hass)
         async_dispatcher_send(self.hass, f"{DOMAIN}_{self.pedal.entry_id}_updated")

@@ -11,13 +11,12 @@ from .const import DOMAIN
 from .const import DEBUG_BLUETOOTH
 from .pedal import LookPedal
 from .services import async_register_services
-from .services import dump_service_info
+# from .services import dump_service_info
 
 LOGGER = logging.getLogger(__name__)
 
 PLATFORMS = [
     Platform.SENSOR,
-    Platform.BINARY_SENSOR,
     Platform.BUTTON,
 ]
 
@@ -26,7 +25,6 @@ async def async_setup(
     hass: HomeAssistant,
     config: dict,
 ) -> bool:
-    LOGGER.warning("LOOK KEO: starting up...")
     if DEBUG_BLUETOOTH:
         _dump_hass_entries(hass)
 
@@ -39,14 +37,16 @@ async def async_setup_entry(
     entry: ConfigEntry,
 ) -> bool:
     address = entry.data.get("address")
+    # address = entry.data.get("address").upper()
     if not address:
         LOGGER.warning("Config entry missing address: %s", entry.entry_id)
-        LOGGER.warning("ENTRY ID=%s TITLE=%s DATA=%s", entry.entry_id, entry.title, entry.data)
+        if DEBUG_BLUETOOTH:
+            LOGGER.warning("ENTRY ID=%s TITLE=%s DATA=%s", entry.entry_id, entry.title, entry.data)
         return False
 
     pedal = LookPedal.from_config_entry(entry)
     await pedal.load(hass)
-    LOGGER.warning("Configured LOOK pedal: %s (%s)", pedal.name, pedal.address)
+    LOGGER.info("Configured LOOK pedal: %s (%s)", pedal.name, pedal.address)
 
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = pedal
@@ -57,16 +57,19 @@ async def async_setup_entry(
         _dump_entry(entry)
 
     def _advertisement_callback(service_info: bluetooth.BluetoothServiceInfoBleak, change: bluetooth.BluetoothChange) -> None:
-        if DEBUG_BLUETOOTH:
-            dump_service_info(service_info)
-        pedal.update_from_advertisement(service_info, hass)
-        LOGGER.warning("PEDAL %s advertisements=%s", pedal.name, pedal.advertisement_count)
-        async_dispatcher_send(hass, f"{DOMAIN}_{entry.entry_id}_updated")
+        try:
+            # if DEBUG_BLUETOOTH:
+            #     dump_service_info(service_info)
+            pedal.update_from_advertisement(service_info, hass)
+            LOGGER.debug("PEDAL %s advertisements=%s", pedal.name, pedal.advertisement_count)
+            async_dispatcher_send(hass, f"{DOMAIN}_{entry.entry_id}_updated")
+        except Exception:
+            LOGGER.error("Failed to process BT advertisement")
 
     cancel_callback = bluetooth.async_register_callback(
         hass,
         _advertisement_callback,
-        {"address": address},
+        {"address": address.upper()},
         BluetoothScanningMode.ACTIVE,
     )
 
@@ -80,29 +83,20 @@ async def async_unload_entry(
 ) -> bool:
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unload_ok:
-        hass.data[DOMAIN].pop(entry.entry_id, None)
-    if not hass.data[DOMAIN]:
-        hass.data.pop(DOMAIN)
+        domain_data = hass.data.get(DOMAIN)
+        if domain_data is not None:
+            domain_data.pop(entry.entry_id, None)
+            if not domain_data:
+                hass.data.pop(DOMAIN, None)
     return unload_ok
 
 
 def _dump_hass_entries(hass: HomeAssistant) -> None:
-    LOGGER.warning("BEGIN DUMP")
+    LOGGER.debug("BEGIN DUMP")
     for config_entry in hass.config_entries.async_entries(DOMAIN):
-        LOGGER.warning(
-            "ENTRY: %s title=%s data=%s",
-            config_entry.entry_id,
-            config_entry.title,
-            config_entry.data,
-        )
-    LOGGER.warning("END DUMP")
+        LOGGER.debug("ENTRY: %s title=%s data=%s", config_entry.entry_id, config_entry.title, config_entry.data)
+    LOGGER.debug("END DUMP")
 
 
 def _dump_entry(entry: ConfigEntry) -> None:
-    LOGGER.warning(
-        "ENTRY ID=%s TITLE=%s DATA=%s UNIQUE_ID=%s",
-        entry.entry_id,
-        entry.title,
-        entry.data,
-        entry.unique_id,
-    )
+    LOGGER.debug("ENTRY ID=%s TITLE=%s DATA=%s UNIQUE_ID=%s", entry.entry_id, entry.title, entry.data, entry.unique_id)

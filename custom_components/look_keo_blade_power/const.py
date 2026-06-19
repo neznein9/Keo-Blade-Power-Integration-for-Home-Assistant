@@ -1,4 +1,4 @@
-DOMAIN = "look_keo_blade_power"
+DOMAIN = "look_keo_blade_power" # Must match manifest.json and directory name
 
 DEVICE_NAME_MATCH = "Look_PWR_"
 
@@ -6,5 +6,3 @@ DEVICE_NAME_MATCH = "Look_PWR_"
 MANUFACTURER_ASSIGNED_NUMBER = 0x0D6E  # Bluetooth Assigned Number: Look Cycle International
 
 DEBUG_BLUETOOTH = False
-
-DEBUG_TAG = "v6"

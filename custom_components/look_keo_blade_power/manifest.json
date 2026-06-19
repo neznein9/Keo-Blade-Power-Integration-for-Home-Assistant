@@ -4,9 +4,9 @@
     "version": "0.0.1",
     "documentation": "https://github.com/neznein9/Keo-Blade-Power-Integration-for-Home-Assistant",
     "issue_tracker": "https://github.com/neznein9/Keo-Blade-Power-Integration-for-Home-Assistant/issues",
-    "dependencies": [ "bluetooth" ],
+    "dependencies": [ "bluetooth", "bluetooth_adapters" ],
     "iot_class": "local_push",
-    "integration_type": "integration",
+    "integration_type": "device",
     "config_flow": true,
     "codeowners": [ "@neznein9" ]
 }
