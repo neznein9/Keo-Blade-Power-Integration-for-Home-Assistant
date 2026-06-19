@@ -1,9 +1,9 @@
 <!-- markdownlint-disable first-line-heading -->
 <!-- markdownlint-disable no-inline-html -->
-<img src="custom_components/look_keo_blade_power/brand/icon.png" width="12%" align="left" style="float: left; margin: 10px 0px 20px 20px;" />
+<img src="custom_components/look_keo_blade_power/brand/icon.png" width="12%" align="left" style="float: left; margin: 30px 0px 20px 20px;" />
 
 [![GitHub Release](https://img.shields.io/github/v/release/neznein9/Keo-Blade-Power-Integration-for-Home-Assistant)](https://github.com/neznein9/Keo-Blade-Power-Integration-for-Home-Assistant/releases/latest)
-[![GitHub License](https://img.shields.io/github/license/neznein9/Keo-Blade-Power-Integration-for-Home-Assistant)](./LICENSE)
+[![GitHub License](https://img.shields.io/github/license/neznein9/Keo-Blade-Power-Integration-for-Home-Assistant?cacheSeconds=60)](./LICENSE)
 [![hacs](https://img.shields.io/badge/HACS-default-green.svg)](https://hacs.xyz)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-blue.svg)](https://github.com/neznein9/Keo-Blade-Power-Integration-for-Home-Assistant/pulls)
 

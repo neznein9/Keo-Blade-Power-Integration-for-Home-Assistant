@@ -132,7 +132,7 @@ class LookPedalRSSISensor(LookPedalSensor):
 class LookPedalLastSeenSensor(LookPedalSensor):
     sensor_key = "last_seen"
     sensor_name = "Last Seen"
-    _attr_icon = "mdi:clock-outline"
+    _attr_icon = "mdi:bike-pedal-clipless"
     _attr_device_class = SensorDeviceClass.TIMESTAMP
 
     @property
