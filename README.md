@@ -1,5 +1,6 @@
 <!-- markdownlint-disable first-line-heading -->
 <!-- markdownlint-disable no-inline-html -->
+<img src="custom_components/look_keo_blade_power/brand/icon.png" width="12%" align="left" style="float: left; margin: 10px 0px 20px 20px;" />
 
 [![GitHub Release](https://img.shields.io/github/v/release/neznein9/Keo-Blade-Power-Integration-for-Home-Assistant)](https://github.com/neznein9/Keo-Blade-Power-Integration-for-Home-Assistant/releases/latest)
 [![GitHub License](https://img.shields.io/github/license/neznein9/Keo-Blade-Power-Integration-for-Home-Assistant)](./LICENSE)
@@ -10,14 +11,12 @@
 
 ---
 
-<img src="custom_components/look_keo_blade_power/brand/icon.png" width="25%" align="right" style="float: right; margin: 10px 0px 20px 20px;" />
 
 # Keo Blade Power Integration for Home-Assistant
 
 ## Integration for Home Assistant
 This is a community integration for [Home Assistant](https://www.home-assistant.io/) that adds support for [LOOK Keo Blade Power](https://www.lookcycle.com/us-en/products/pedals/powermeter/keo-blade-power-single) power meter pedals.
 
----
 
 ## Features
 
@@ -31,7 +30,6 @@ The Keo Blade Power pedals are very conservative with energy usage. They do not 
 
 The pedals only allow one Bluetooth connection at a time. If the pedals are connected to a cycling computer or smart phone, they become invisible to Home Assistant (and vice versa). Because of this limitation, Home Assistant will only attempt to read the battery level of the pedals when a Bluetooth advertisement packet is received, by connecting for about 1 second and then releasing the connection. (Up to one time per hour maximum.)
 
----
 
 ## Requirements
 - [Bluetooth](https://www.home-assistant.io/integrations/bluetooth/) integration with Home Assistant
@@ -77,7 +75,6 @@ Paste in the MAC address of your pedal and click `Submit`. You will then see the
 
 Home Assistant will automatically attempt to read the battery and device data.
 
----
 
 ## Tested Devices
 - [x] [Keo Blade Power Single](https://www.lookcycle.com/us-en/products/pedals/powermeter/keo-blade-power-single)
@@ -86,7 +83,6 @@ Home Assistant will automatically attempt to read the battery and device data.
 - [ ] [X-Track Power Single](https://www.lookcycle.com/us-en/products/pedals/powermeter/x-track-power-single)
 - [ ] [X-Track Power Dual](https://www.lookcycle.com/us-en/products/pedals/powermeter/x-track-power-dual)
 
----
 
 ## Contributing
 
